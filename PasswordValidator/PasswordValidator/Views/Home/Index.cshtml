@@ -1,0 +1,770 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<script src="~/Scripts/jquery-3.3.1.min.js"></script>
+
+<div>
+    <form>
+        <br />
+        <br />
+        <h6>AVALIADOR DE SEGURANÇA DE SENHA</h6>
+        Digite a Senha: <input type="password" id="txtSenha" value="" placeholder="Senha">
+        <br />
+          <br />
+                        <div>
+                            <table>
+                                <tr>
+                                    <td >
+                                        <button type="button" class="btn-block btn-default disabled" id="btnPercent" value="0%"></button>
+                                    </td>
+                                    <td class="col-md-2">
+
+                                    </td >
+                                    <td >
+                                        <button type="button" class="btn-block btn-default disabled" id="btnComplexidade" value=" "></button>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+        <br />
+        <br />
+    </form>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        //Funcao Keyup do input
+        $('#txtSenha').keyup(function () {
+            var pontuacaototal = 0;
+            var letrasminusculas = 0;
+            var letrasmaiusculas = 0;
+
+            if (this.value.length > 0) {
+
+                var senha = this.value;
+
+
+
+             
+
+                //Adições
+                pontuacaototal += MultiplicaCaracterpor4(senha);
+
+
+                letrasminusculas = ContaLetrasMinusculasSetiverOutro(senha);
+                if (letrasminusculas > 0) {
+                    pontuacaototal += ((senha.length - letrasminusculas) * 2);
+                }
+
+                letrasmaiusculas = ContaLetrasMaiusculasSetiverOutro(senha);
+                if (letrasmaiusculas > 0) {
+                    pontuacaototal += ((senha.length - letrasmaiusculas) * 2);
+                }
+
+                pontuacaototal += (ContaNumerosSetiverOutro(senha) * 4);
+                pontuacaototal += (ContadordeSimbolos(senha) * 6);
+                pontuacaototal += (RetornaMeioNumerosSimbolos(senha) * 2);
+                pontuacaototal += (VerificaRequisitosMinimos(senha) * 2);
+               
+                //Subtrações
+
+                pontuacaototal += (ValidarSomenteLetras(senha) * -1);    
+                pontuacaototal += (ValidarSomenteNumerico(senha) * -1);
+                pontuacaototal += (RetornaConseqLetrasMinusculas(senha) * -2);
+                pontuacaototal += (RetornaConseqLetrasMaiusculas(senha) * -2);
+                pontuacaototal += (RetornaConseqNumeros(senha) * -2);
+                pontuacaototal += ( VerificaSimbolos(senha)* -3);
+                pontuacaototal += (VerificaSequenciaNumerica(senha)* -3);
+                pontuacaototal +=  (VerificaSeqLetras(senha) * -3);
+                
+                
+                
+            }
+            CalculaValorFinal(pontuacaototal);
+           
+        });
+    });
+
+    function MultiplicaCaracterpor4(senha){
+
+        return senha.length * 4;
+
+    }
+
+    function ValidarSomenteNumerico(senha) {
+        if ($.isNumeric(senha)) {
+            
+            return senha.length;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    function ValidarSomenteLetras(senha) {
+
+        var RegExpression = /^[a-zA-Z\s]*$/;
+        if (RegExpression.test(senha)) {
+            return senha.length;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    function ContadordeSimbolos(senha) {
+       
+        var regex = new RegExp("^[a-zA-Z0-9]+$");
+
+        if (!regex.test(senha) == true) {
+
+            var array = senha.split("");
+            var contador = 0;
+            $.each(array, function (index, value) {
+               
+                if (!regex.test(value) == true) {
+                    contador++;
+                          
+                }    
+            });
+
+            
+            return contador ;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    function VerificaSequenciaNumerica(senha) {
+
+        var array = senha.split("");
+        var arraycodigoasc = [];
+        var arraysequenciasNum = [];
+
+        $.each(array, function (index, value) {
+
+
+            arraycodigoasc.push(value.charCodeAt(0));
+            
+            
+        });
+
+        if (senha.length > 2) {
+            var codigoanterior = 0;  
+            //inicia como 1 item
+            var contadorsequencia = 1;
+            var ocorrenciapontuacao = 0;
+            var sequencia = "";
+            var soma = false;
+            var subtr = false;
+            $.each(arraycodigoasc, function (index2, value2) {
+
+               
+                if (index2 > 0) {
+                    if (value2 > 48 && value2 <= 57) {
+                        
+                        //Se for numérico verifica se o código asc do numero anterior + 1 e igual ao valor
+                        if ((codigoanterior + 1) === value2) {
+                            soma = true;
+                            if (subtr === true)
+                            {
+                                contadorsequencia = 1;
+                                sequencia = ""
+
+                            }
+                            
+                            contadorsequencia++;
+
+                           
+
+                            if (contadorsequencia >= 3)
+                            {
+                                if (sequencia === "") {
+                                    sequencia = parseInt(array[index2 - 2]) + parseInt(array[index2 - 1]) + parseInt(array[index2]);
+                                }
+                                else {
+                                    sequencia += value2;
+                                }
+
+                                if (arraysequenciasNum.length === 0) {
+
+                                    ocorrenciapontuacao++;
+                                    
+                                    //salva a soma da primeira sequencia no  array
+                                    arraysequenciasNum.push(sequencia);
+                                    
+
+                                }
+                                else {
+                                    
+                                    //Se não houver sequencia repetida no array soma o contador
+                                    if (!$.inArray(sequencia, arraysequenciasNum) > -1)
+                                    {
+                                       
+                                        ocorrenciapontuacao++;
+                                        arraysequenciasNum.push(sequencia);
+                                    }
+
+                                }
+                                
+                            }
+                        }
+                        else {              
+                                    //Se for numérico verifica se o código asc do numero anterior  e igual ao valor + 1
+                            if (codigoanterior === (value2 + 1)) {
+                                subtr = true;
+                                if (soma === true) {
+                                    contadorsequencia = 1;
+                                    sequencia = "";
+                                    soma = false;
+                                }
+                                contadorsequencia++;
+
+                                if (contadorsequencia >= 3) {
+                                    if (sequencia === "") {
+                                        sequencia = parseInt(array[index2 - 2]) + parseInt(array[index2 - 1]) + parseInt(array[index2]);
+                                    }
+                                    else {
+                                        sequencia += value2;
+                                    }
+
+                                    if (arraysequenciasNum.length === 0) {
+
+                                        ocorrenciapontuacao++;
+
+                                        //salva a soma da primeira sequencia no  array
+                                        arraysequenciasNum.push(sequencia);
+                                        
+
+                                    }
+                                    else {
+                                      
+                                        //Se não houver sequencia repetida no array soma o contador
+                                        if (!$.inArray(sequencia, arraysequenciasNum) > -1)
+                                        {
+
+                                            ocorrenciapontuacao++;
+                                            arraysequenciasNum.push(sequencia);
+                                        }
+
+                                    }
+
+                                }
+                            }
+                            else {
+
+                                contadorsequencia = 1; sequencia = ""
+                            };
+                        }
+                    }
+                    else {
+                        contadorsequencia = 1; sequencia = "";
+                    }
+                    
+                    codigoanterior = value2;
+                }
+                else {
+                    codigoanterior = value2;
+
+                }
+
+            });
+            return ocorrenciapontuacao;
+        }
+        else {
+            return 0;
+        }
+
+
+        
+        
+       
+    }
+
+    function VerificaRequisitosMinimos(senha) {
+
+        var pontuacaoitens = 0;
+        var tamanhosenha = 0;
+        var existeNumero = false;
+
+        tamanhosenha = senha.length;
+        if (tamanhosenha >= 8) {
+
+            
+
+            //Se existir um simbolo
+            if (ContadordeSimbolos(senha) > 0) {
+                pontuacaoitens++;
+            }
+
+
+            //Se existir um número
+             var array = senha.split("");
+            var contador = 0;
+            $.each(array, function (index, value) {
+               
+                if ($.isNumeric(value) && existeNumero == false) {
+                    pontuacaoitens++;
+                    existeNumero = true;
+                          
+                }    
+            });
+
+
+            //Se existir uma letra Maiuscula
+            var maiuscula = "";
+            for (var i = 0; i < senha.length; i++) {
+
+                if (senha[i].charCodeAt(0) < 91 && senha[i].charCodeAt(0) > 64) {
+
+                    maiuscula += senha[i];
+                }
+            }
+
+            if (maiuscula !== "") {
+                pontuacaoitens++;
+            }
+
+            //Se existir uma letra Minuscula
+            var minuscula = "";
+            for (var j = 0; j < senha.length; j++) {
+
+                if (senha[j].charCodeAt(0) < 123 && senha[j].charCodeAt(0) > 96) {
+
+                    minuscula += senha[j];
+                }
+            }
+            if (minuscula !== "") {
+                pontuacaoitens++;
+            }
+            
+           
+            if (pontuacaoitens >= 3) {
+                //se a pontuacao de itens for maior igual a 3, retorna um a mais do tamanho
+                return pontuacaoitens + 1;
+            }
+            else {
+                return 0;
+            }
+             
+          
+        }
+        else {
+
+            return 0;
+        }
+    }
+
+    function RetornaConseqLetrasMaiusculas(senha)
+    {
+        var retorno = 0;
+
+        if (senha.length > 1)
+        {
+            for (var i = 1; i < senha.length; i++)
+            {
+
+                //verifica se o caracter anterior e atual sao maiusculos ao mesmo tempo
+                if ((senha[i - 1].charCodeAt(0) < 91 && senha[i - 1].charCodeAt(0) > 64) && (senha[i].charCodeAt(0) < 91 && senha[i].charCodeAt(0) > 64))
+                {
+                    retorno++;
+                }
+
+
+            }
+            
+            
+        }
+        
+        return retorno;
+    }
+
+    function RetornaConseqLetrasMinusculas(senha) {
+        var retorno = 0;
+
+          if (senha.length > 1)
+        {
+            for (var i = 1; i < senha.length; i++)
+            {
+
+                //verifica se o caracter anterior e atual sao maiusculos ao mesmo tempo
+                if ((senha[i - 1].charCodeAt(0) < 123 && senha[i - 1].charCodeAt(0) > 96) && (senha[i].charCodeAt(0) < 123 && senha[i].charCodeAt(0) > 96))
+                {
+                    retorno++;
+                }
+
+
+            }
+            
+            
+        }
+       
+        return retorno;
+    }
+
+    function RetornaConseqNumeros(senha) {
+        var retorno = 0;
+        if (senha.length > 1) {
+            for (var i = 1; i < senha.length; i++) {
+
+                //Verifica se o caracter anterior e o atual são números ao mesmo tempo
+                if (($.isNumeric(senha[i - 1])) && ($.isNumeric(senha[i]))) {
+                    retorno++;
+                }
+
+            }
+            
+        }
+        return retorno;
+    }
+
+    function RetornaMeioNumerosSimbolos(senha) {
+        var retorno = 0;
+        var regex = new RegExp("^[a-zA-Z0-9]+$");
+
+        //verifica se o tamanho da senha é maior que 2
+        if (senha.length > 2) {
+            for (var i = 1; i < senha.length-1; i++) {
+
+                
+                //Verifica se o caracter do meio é Numérico ou simbolo
+                if ($.isNumeric(senha[i]) || (!regex.test(senha[i]) == true)) {
+                    retorno++;
+                        
+                }
+
+            }
+
+        }
+        return retorno;
+    }
+
+    function VerificaSeqLetras(senha) {
+
+        var ocorrenciapontuacao = 0;
+        var alfabeto = "abcdefghijklmnopqrstuvwxyz";
+
+
+        for (var i = 0; i < 23; i++) {
+            var frente = alfabeto.substring(i, parseInt(i + 3));
+            var reverso = frente.split("").reverse().join("");
+            if (senha.toLowerCase().indexOf(frente) != -1 || senha.toLowerCase().indexOf(reverso) != -1) { ocorrenciapontuacao++; }
+
+        }
+        return ocorrenciapontuacao;
+    }
+
+    function ContaNumerosSetiverOutro(senha) {
+        var retorno = 0;
+        var existeOutro = false;
+
+        //Se existir um simbolo
+        if (ContadordeSimbolos(senha) > 0) {
+            existeOutro = true;
+        }
+
+
+        //Se existir uma letra Maiuscula
+        var maiuscula = "";
+        for (var i = 0; i < senha.length; i++) {
+
+            if (senha[i].charCodeAt(0) < 91 && senha[i].charCodeAt(0) > 64) {
+
+                maiuscula += senha[i];
+            }
+        }
+
+        if (maiuscula !== "") {
+            existeOutro = true;
+        }
+
+        //Se existir uma letra Minuscula
+        var minuscula = "";
+        for (var j = 0; j < senha.length; j++) {
+
+            if (senha[j].charCodeAt(0) < 123 && senha[j].charCodeAt(0) > 96) {
+
+                minuscula += senha[j];
+            }
+        }
+        if (minuscula !== "") {
+            existeOutro = true;
+        }
+
+        //Realiza a contagem dos números
+        var array = senha.split("");
+        var contNumeros = 0;
+        $.each(array, function (index, value) {
+
+            if ($.isNumeric(value)) {
+                contNumeros++;
+       
+            }
+        });
+
+        //Se existir um caracter nao numero na sequencia, retorna a contagem de numericos
+        if (existeOutro) {
+            retorno = contNumeros;
+        }
+
+        return retorno;
+    }
+
+    function ContaLetrasMinusculasSetiverOutro(senha) {
+        var retorno = 0;
+        var existeOutro = false;
+
+        //Se existir um simbolo
+        if (ContadordeSimbolos(senha) > 0) {
+            existeOutro = true;
+        }
+
+
+        //Se existir uma letra Maiuscula
+        var maiuscula = "";
+        for (var i = 0; i < senha.length; i++) {
+
+            if (senha[i].charCodeAt(0) < 91 && senha[i].charCodeAt(0) > 64) {
+
+                maiuscula += senha[i];
+            }
+        }
+        if (maiuscula !== "") {
+            existeOutro = true;
+        }
+
+
+        //Se existir um número
+        var array = senha.split("");
+        var contador = 0;
+        $.each(array, function (index, value) {
+
+            if ($.isNumeric(value)) {
+                
+                existeOutro = true;
+
+            }
+        });
+
+
+        //Realiza a contagem de letras Minusculas
+        var minuscula = 0;
+        for (var j = 0; j < senha.length; j++) {
+
+            if (senha[j].charCodeAt(0) < 123 && senha[j].charCodeAt(0) > 96) {
+                
+                minuscula ++;
+            }
+        }
+     
+
+        //Se existir um caracter nao letra minuscula na sequencia, retorna a contagem dos mesmos
+        if (existeOutro) {
+            retorno = minuscula;
+        }
+        return retorno;
+    }
+
+    function ContaLetrasMaiusculasSetiverOutro(senha) {
+        var retorno = 0;
+        var existeOutro = false;
+
+        //Se existir um simbolo
+        if (ContadordeSimbolos(senha) > 0) {
+            existeOutro = true;
+        }
+
+
+        //Se existir uma letra Minuscula
+        var minuscula = "";
+        for (var i = 0; i < senha.length; i++) {
+
+            if (senha[i].charCodeAt(0) < 123 && senha[i].charCodeAt(0) > 96) {
+
+                minuscula += senha[i];
+            }
+        }
+        if (minuscula !== "") {
+            existeOutro = true;
+        }
+
+
+        //Se existir um número
+        var array = senha.split("");
+        var contador = 0;
+        $.each(array, function (index, value) {
+
+            if ($.isNumeric(value)) {
+
+                existeOutro = true;
+
+            }
+        });
+
+
+        //Realiza a contagem de letras Maiusculas
+        var maiuscula = 0;
+        for (var j = 0; j < senha.length; j++) {
+
+            if (senha[j].charCodeAt(0) < 91 && senha[j].charCodeAt(0) > 64) {
+
+                maiuscula++;
+            }
+        }
+
+
+        //Se existir um caracter nao letra maiuscula na sequencia, retorna a contagem dos mesmos
+        if (existeOutro) {
+            retorno = maiuscula;
+        }
+        return retorno;
+    }
+
+    function VerificaSimbolos(senha) {
+        var simbolossequencia = ")!\@@#$%^&*(";
+        var inversesimbolo = simbolossequencia.split("").reverse().join("");
+       
+       
+        //inicia como 1 item
+        var indexseqanterior = 0;
+        var contadorsequencia = 1;
+        var ocorrenciapontuacao = 0;
+        var sequencia = "";
+        var soma = false;
+        var subtr = false;
+        var arraysequenciasNum = [];
+
+        if (senha.length >= 3) {
+
+            for (var i = 2; i < senha.length; i++) {
+                
+                    if (sequencia === "") {
+                        sequencia = senha[i - 2] + senha[i - 1] + senha[i];
+                       
+                    }
+                    else {
+                        sequencia += senha[i];
+                    }
+
+
+                    if (sequencia.length >= 3)
+                    {
+                        
+                        if ((simbolossequencia.indexOf(sequencia) != -1) || (inversesimbolo.indexOf(sequencia) != -1))
+                                {
+                                  //Se não houver sequencia repetida no array soma o contador
+                                if (!$.inArray(sequencia, arraysequenciasNum) > -1) {
+
+                                    ocorrenciapontuacao++;
+                                  
+                                    arraysequenciasNum.push(sequencia);
+                                }
+                                else {
+                                    sequencia = "";
+                                }
+
+                                
+
+                            }
+                            else
+                            {
+                                 sequencia = "";
+                                 
+                            }
+                      
+
+
+                 }
+            }
+
+
+        }
+        return ocorrenciapontuacao;
+    }
+
+   
+
+
+    function CalculaValorFinal(valor) {
+        var sComplexity = "";
+        $("#btnComplexidade").removeClass();
+
+        if (valor > 100) {
+            valor = 100
+        }
+        else
+
+        if (valor < 0) { valor = 0; }
+
+        if (valor >= 0 && valor < 20) {
+            sComplexity = "Muito Curta";
+            $("#btnComplexidade").addClass("btn-block btn-danger disabled");
+        }
+        
+     
+   
+        else if (valor >= 20 && valor < 40)
+        {
+            sComplexity = "Curta";
+            $("#btnComplexidade").addClass("btn-block btn-warning disabled");
+        }
+        else if (valor >= 40 && valor < 60)
+        {
+            sComplexity = "Boa";
+            $("#btnComplexidade").addClass("btn block btn-info disabled");
+        }
+        else if (valor >= 60 && valor < 80)
+        {
+            sComplexity = "Forte";
+            $("#btnComplexidade").addClass("btn block btn-info disabled");
+        }
+        else if (valor >= 80 && valor <= 100)
+        {
+            sComplexity = "Muito Forte";
+            $("#btnComplexidade").addClass("btn block btn-success disabled");
+        }
+
+       
+
+        $("#btnPercent").text( valor + '%');
+
+        $("#btnComplexidade").text(sComplexity);
+        
+        
+    }
+    function CaracteresRepetidos(senha) {
+
+
+      
+        ///* Internal loop through password to check for repeat characters */
+        //var bCharExists = false;
+        //for (var b = 0; b < arrPwdLen; b++) {
+        //    if (arrPwd[a] == arrPwd[b] && a != b) { /* repeat character exists */
+        //        bCharExists = true;
+        //        /* 
+        //        Calculate icrement deduction based on proximity to identical characters
+        //        Deduction is incremented each time a new match is discovered
+        //        Deduction amount is based on total password length divided by the
+        //        difference of distance between currently selected match
+        //        */
+        //        nRepInc += Math.abs(arrPwdLen / (b - a));
+        //    }
+        //}
+        //if (bCharExists) {
+        //    nRepChar++;
+        //    nUnqChar = arrPwdLen - nRepChar;
+        //    nRepInc = (nUnqChar) ? Math.ceil(nRepInc / nUnqChar) : Math.ceil(nRepInc);
+        //}
+
+
+
+    }
+
+
+  
+
+    
+
+</script>
